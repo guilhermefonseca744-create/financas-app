@@ -367,6 +367,47 @@ class Goal {
       );
 }
 
+/// Compra detectada numa notificação do banco, aguardando confirmação.
+class PendingImport {
+  final int? id;
+  final String source; // pacote/app de origem
+  final String title;
+  final String rawText;
+  final double? amount;
+  final String? merchant;
+  final DateTime createdAt;
+
+  const PendingImport({
+    this.id,
+    required this.source,
+    required this.title,
+    required this.rawText,
+    this.amount,
+    this.merchant,
+    required this.createdAt,
+  });
+
+  Map<String, Object?> toMap() => {
+        'id': id,
+        'source': source,
+        'title': title,
+        'raw_text': rawText,
+        'amount': amount,
+        'merchant': merchant,
+        'created_at': createdAt.toIso8601String(),
+      };
+
+  factory PendingImport.fromMap(Map<String, Object?> m) => PendingImport(
+        id: m['id'] as int?,
+        source: (m['source'] as String?) ?? '',
+        title: (m['title'] as String?) ?? '',
+        rawText: (m['raw_text'] as String?) ?? '',
+        amount: (m['amount'] as num?)?.toDouble(),
+        merchant: m['merchant'] as String?,
+        createdAt: DateTime.parse(m['created_at'] as String),
+      );
+}
+
 /// Conta a pagar (lembrete). Vence todo mês no dia [dueDay].
 class Bill {
   final int? id;

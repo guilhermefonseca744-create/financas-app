@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../state/finance_provider.dart';
 import '../../state/settings_controller.dart';
 import '../widgets/month_selector.dart';
+import 'bank_import_screen.dart';
 import 'bills_screen.dart';
 import 'goals_screen.dart';
 import 'recurring_screen.dart';
@@ -76,6 +77,7 @@ class DashboardScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+            _ImportsReminder(provider: provider),
             _BillsReminder(provider: provider),
             const _QuickActions(),
             const SizedBox(height: 20),
@@ -135,6 +137,50 @@ class _BalanceCard extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ImportsReminder extends StatelessWidget {
+  const _ImportsReminder({required this.provider});
+  final FinanceProvider provider;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = provider.pendingImports.length;
+    if (count == 0) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: scheme.secondaryContainer,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BankImportScreen()),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(Icons.notifications_active_outlined,
+                    color: scheme.onSecondaryContainer),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '$count compra(s) detectada(s) no banco — toque para revisar',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.onSecondaryContainer),
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: scheme.onSecondaryContainer),
+              ],
+            ),
+          ),
         ),
       ),
     );

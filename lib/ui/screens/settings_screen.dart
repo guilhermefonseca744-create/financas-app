@@ -10,6 +10,7 @@ import '../../services/update_service.dart';
 import '../../state/finance_provider.dart';
 import '../../state/settings_controller.dart';
 import '../update_flow.dart';
+import 'bank_import_screen.dart';
 import 'bills_screen.dart';
 import 'categories_screen.dart';
 import 'goals_screen.dart';
@@ -112,6 +113,12 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Categorias',
                 subtitle: 'Criar e editar categorias',
                 page: const CategoriesScreen(),
+              ),
+              _NavTile(
+                icon: Icons.notifications_active_outlined,
+                title: 'Importar do banco',
+                subtitle: 'Detecta compras pelas notificações (Android)',
+                page: const BankImportScreen(),
               ),
             ],
           ),

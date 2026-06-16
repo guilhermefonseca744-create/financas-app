@@ -365,6 +365,19 @@ class FinanceRepository {
   String _csv(String v) =>
       '"${v.replaceAll('"', '""')}"';
 
+  // ---------- Importações do banco (notificações) ----------
+  Future<List<PendingImport>> getPendingImports() async {
+    final rows =
+        await _db.query('pending_imports', orderBy: 'created_at DESC, id DESC');
+    return rows.map(PendingImport.fromMap).toList();
+  }
+
+  Future<int> insertPendingImport(PendingImport pi) =>
+      _db.insert('pending_imports', pi.toMap()..remove('id'));
+
+  Future<void> deletePendingImport(int id) =>
+      _db.delete('pending_imports', where: 'id = ?', whereArgs: [id]);
+
   // ---------- Manutenção ----------
   /// Apaga todos os dados e recria a conta e categorias padrão.
   Future<void> resetAll() async {

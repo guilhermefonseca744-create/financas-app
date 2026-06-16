@@ -27,7 +27,7 @@ Future<Database> openAppDatabase() async {
   return databaseFactory.openDatabase(
     dbPath,
     options: OpenDatabaseOptions(
-      version: 2,
+      version: 3,
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: createAppSchema,
       onUpgrade: _onUpgrade,
@@ -88,6 +88,7 @@ Future<void> createAppSchema(Database db, int version) async {
   ''');
 
   await _createV2Tables(db);
+  await _createV3Tables(db);
 
   await db.execute('CREATE INDEX idx_tx_date ON transactions(date)');
   await db.execute('CREATE INDEX idx_tx_account ON transactions(account_id)');
@@ -144,6 +145,21 @@ Future<void> _createV2Tables(Database db) async {
   ''');
 }
 
+/// Tabela adicionada na versão 3 (importações do banco via notificação).
+Future<void> _createV3Tables(Database db) async {
+  await db.execute('''
+    CREATE TABLE pending_imports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      source TEXT,
+      title TEXT,
+      raw_text TEXT,
+      amount REAL,
+      merchant TEXT,
+      created_at TEXT NOT NULL
+    )
+  ''');
+}
+
 /// Migração de versões anteriores.
 Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
   if (oldVersion < 2) {
@@ -157,6 +173,9 @@ Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
         'ALTER TABLE transactions ADD COLUMN installment_total INTEGER');
     await db.execute('ALTER TABLE transactions ADD COLUMN receipt_path TEXT');
     await _createV2Tables(db);
+  }
+  if (oldVersion < 3) {
+    await _createV3Tables(db);
   }
 }
 

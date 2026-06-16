@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' hide Category;
 import '../core/formatters.dart';
 import '../data/finance_repository.dart';
 import '../data/models.dart';
+import '../services/bank_import_service.dart';
 
 /// Estado central do app. Carrega dados do repositório e notifica a UI.
 class FinanceProvider extends ChangeNotifier {
@@ -25,6 +26,7 @@ class FinanceProvider extends ChangeNotifier {
   List<Goal> _goals = [];
   List<Bill> _bills = [];
   Set<int> _billsPaidThisMonth = {};
+  List<PendingImport> _pendingImports = [];
   double _income = 0;
   double _expense = 0;
 
@@ -45,6 +47,7 @@ class FinanceProvider extends ChangeNotifier {
   List<Recurring> get recurrings => _recurrings;
   List<Goal> get goals => _goals;
   List<Bill> get bills => _bills;
+  List<PendingImport> get pendingImports => _pendingImports;
 
   double get income => _income;
   double get expense => _expense;
@@ -149,6 +152,24 @@ class FinanceProvider extends ChangeNotifier {
     await _reload();
     _loading = false;
     notifyListeners();
+    await startBankImport();
+  }
+
+  /// (Re)inicia a escuta de notificações do banco (Android, se permitido).
+  Future<void> startBankImport() async {
+    await BankImportService.start(_onBankCapture);
+  }
+
+  Future<void> _onBankCapture(PendingImport imp) async {
+    await _repo.insertPendingImport(imp);
+    _pendingImports = await _repo.getPendingImports();
+    notifyListeners();
+  }
+
+  Future<void> deletePendingImport(int id) async {
+    await _repo.deletePendingImport(id);
+    _pendingImports = await _repo.getPendingImports();
+    notifyListeners();
   }
 
   Future<void> _reload() async {
@@ -169,6 +190,7 @@ class FinanceProvider extends ChangeNotifier {
       final paid = await _repo.paidMonths(b.id!);
       if (paid.contains(nowKey)) _billsPaidThisMonth.add(b.id!);
     }
+    _pendingImports = await _repo.getPendingImports();
   }
 
   Future<void> refresh() async {

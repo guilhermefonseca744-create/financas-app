@@ -14,8 +14,21 @@ import '../../state/finance_provider.dart';
 
 /// Formulário para criar/editar uma transação (receita, despesa ou transferência).
 class TransactionEditor extends StatefulWidget {
-  const TransactionEditor({super.key, this.existing});
+  const TransactionEditor({
+    super.key,
+    this.existing,
+    this.initialAmount,
+    this.initialDescription,
+    this.onSaved,
+  });
   final Tx? existing;
+
+  /// Valores pré-preenchidos (ex.: importação de notificação do banco).
+  final double? initialAmount;
+  final String? initialDescription;
+
+  /// Chamado após salvar uma transação nova (ex.: remover da caixa de entrada).
+  final VoidCallback? onSaved;
 
   @override
   State<TransactionEditor> createState() => _TransactionEditorState();
@@ -51,6 +64,15 @@ class _TransactionEditorState extends State<TransactionEditor> {
       _toAccountId = e.toAccountId;
       _categoryId = e.categoryId;
       _receiptPath = e.receiptPath;
+    } else {
+      // Pré-preenchimento (importação do banco).
+      if (widget.initialAmount != null) {
+        _amount.text = widget.initialAmount!.toStringAsFixed(2);
+      }
+      if (widget.initialDescription != null) {
+        _description.text = widget.initialDescription!;
+      }
+      _type = TxType.expense;
     }
   }
 
@@ -190,6 +212,7 @@ class _TransactionEditorState extends State<TransactionEditor> {
       ));
     }
 
+    widget.onSaved?.call();
     Navigator.of(context).pop();
   }
 
