@@ -1,0 +1,22 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Plataformas geradas por `flutter create .`
+# (mantidas localmente; descomente se preferir versioná-las)
+# android/
+# windows/
+# linux/
+# macos/
+
+# Banco local de exemplo
+*.db
