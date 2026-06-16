@@ -203,14 +203,18 @@ class SettingsScreen extends StatelessWidget {
           _SectionCard(
             title: 'Sobre',
             icon: Icons.info_outline,
-            children: const [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.account_balance_wallet_outlined),
-                title: Text('Finanças'),
-                subtitle: Text('Versão 1.0.0 • dados locais, sem nuvem'),
+            children: [
+              FutureBuilder<String>(
+                future: UpdateService.currentVersion(),
+                builder: (context, snap) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.account_balance_wallet_outlined),
+                  title: const Text('Finanças'),
+                  subtitle: Text(
+                      'Versão ${snap.data ?? '...'} • dados locais, sem nuvem'),
+                ),
               ),
-              ListTile(
+              const ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(Icons.flutter_dash),
                 title: Text('Feito com Flutter'),
