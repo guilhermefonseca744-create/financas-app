@@ -160,6 +160,11 @@ class FinanceProvider extends ChangeNotifier {
     await BankImportService.start(_onBankCapture);
   }
 
+  /// Reinicia a escuta (cancela e assina de novo).
+  Future<void> restartBankImport() async {
+    await BankImportService.restart(_onBankCapture);
+  }
+
   Future<void> _onBankCapture(PendingImport imp) async {
     await _repo.insertPendingImport(imp);
     _pendingImports = await _repo.getPendingImports();

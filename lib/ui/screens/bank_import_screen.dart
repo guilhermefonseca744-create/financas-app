@@ -94,8 +94,106 @@ class _BankImportScreenState extends State<BankImportScreen> {
                       rawText: pi.rawText,
                       createdAt: pi.createdAt,
                     ),
+                const SizedBox(height: 16),
+                const _Diagnostics(),
               ],
             ),
+    );
+  }
+}
+
+/// Mostra as notificações cruas recebidas — ajuda a entender por que algo
+/// não foi capturado (ex.: texto do banco diferente do esperado).
+class _Diagnostics extends StatelessWidget {
+  const _Diagnostics();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ExpansionTile(
+        leading: const Icon(Icons.bug_report_outlined),
+        title: const Text('Diagnóstico (avançado)'),
+        subtitle: const Text('Notificações recebidas pelo app'),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          ValueListenableBuilder<bool>(
+            valueListenable: BankImportService.listening,
+            builder: (context, listening, _) => Row(
+              children: [
+                Icon(listening ? Icons.hearing : Icons.hearing_disabled,
+                    size: 18,
+                    color: listening
+                        ? Colors.green
+                        : Theme.of(context).colorScheme.error),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(listening
+                      ? 'Escuta ativa.'
+                      : 'Escuta inativa (verifique a permissão).'),
+                ),
+                TextButton.icon(
+                  onPressed: () =>
+                      context.read<FinanceProvider>().restartBankImport(),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Reiniciar'),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          ValueListenableBuilder<List<NotifLog>>(
+            valueListenable: BankImportService.recent,
+            builder: (context, logs, _) {
+              if (logs.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Nenhuma notificação recebida ainda. Com a tela aberta, '
+                    'gere uma notificação (ex.: uma compra) e veja se aparece aqui.',
+                  ),
+                );
+              }
+              return Column(
+                children: [
+                  for (final l in logs)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            l.matched
+                                ? Icons.check_circle
+                                : Icons.circle_outlined,
+                            size: 16,
+                            color: l.matched
+                                ? Colors.green
+                                : Theme.of(context).colorScheme.outline,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(l.source,
+                                    style: const TextStyle(
+                                        fontSize: 11, color: Colors.grey)),
+                                Text(
+                                  '${l.title}${l.content.isNotEmpty ? ' — ${l.content}' : ''}',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

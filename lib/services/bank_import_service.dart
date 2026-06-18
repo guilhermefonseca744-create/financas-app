@@ -1,10 +1,22 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
 
 import '../data/models.dart';
+
+/// Registro cru de uma notificação recebida (para diagnóstico).
+class NotifLog {
+  final String source;
+  final String title;
+  final String content;
+  final DateTime time;
+  final bool matched;
+  const NotifLog(
+      this.source, this.title, this.content, this.time, this.matched);
+}
 
 /// Extrai valor e estabelecimento do texto de uma notificação de banco.
 class BankParser {
@@ -55,6 +67,13 @@ class BankParser {
 class BankImportService {
   static StreamSubscription<ServiceNotificationEvent>? _sub;
 
+  /// Últimas notificações recebidas (diagnóstico). Reativo para a UI.
+  static final ValueNotifier<List<NotifLog>> recent =
+      ValueNotifier<List<NotifLog>>([]);
+
+  /// Indica se a escuta está ativa.
+  static final ValueNotifier<bool> listening = ValueNotifier<bool>(false);
+
   static bool get isSupported => Platform.isAndroid;
 
   static Future<bool> isPermissionGranted() async {
@@ -72,15 +91,24 @@ class BankImportService {
   static Future<void> start(void Function(PendingImport) onCapture) async {
     if (!isSupported) return;
     if (!await isPermissionGranted()) return;
-    _sub ??= NotificationListenerService.notificationsStream.listen((event) {
+    if (_sub != null) return;
+    _sub = NotificationListenerService.notificationsStream.listen((event) {
       final title = event.title ?? '';
       final content = event.content ?? '';
       final text = '$title $content';
-      if (!BankParser.looksLikePurchase(text)) return;
+      final matched =
+          BankParser.looksLikePurchase(text) && BankParser.parse(text).amount != null;
 
+      // Diagnóstico: registra TODA notificação recebida (últimas 30).
+      final log = [
+        NotifLog(event.packageName ?? '', title, content, DateTime.now(),
+            matched),
+        ...recent.value,
+      ];
+      recent.value = log.take(30).toList();
+
+      if (!matched) return;
       final parsed = BankParser.parse(text);
-      if (parsed.amount == null) return; // sem valor não importa
-
       onCapture(PendingImport(
         source: event.packageName ?? '',
         title: title,
@@ -90,10 +118,18 @@ class BankImportService {
         createdAt: DateTime.now(),
       ));
     });
+    listening.value = true;
+  }
+
+  /// Reinicia a escuta (cancela e assina de novo).
+  static Future<void> restart(void Function(PendingImport) onCapture) async {
+    stop();
+    await start(onCapture);
   }
 
   static void stop() {
     _sub?.cancel();
     _sub = null;
+    listening.value = false;
   }
 }
